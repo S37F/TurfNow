@@ -3,7 +3,7 @@ import "../style/payment.css"
 import { IoMdArrowRoundBack } from "react-icons/io"
 import { Link, useNavigate } from 'react-router-dom'
 import { useUserAuth } from '../context/Authcontext'
-import { bookingAPI, paymentAPI } from '../services/api'
+import { bookingAPI } from '../services/api'
 import { 
   Button, 
   Text, 
@@ -15,15 +15,12 @@ import {
   Flex, 
   Icon,
   Divider,
-  Radio,
-  RadioGroup,
-  Stack,
   Spinner,
   Center
 } from '@chakra-ui/react'
 import { PopoverProfile } from '../components/Popover'
 import Logo from '../components/Logo'
-import { MdLocationOn, MdAccessTime, MdCalendarToday, MdPayment, MdAccountBalanceWallet } from "react-icons/md"
+import { MdLocationOn, MdAccessTime, MdCalendarToday, MdAccountBalanceWallet } from "react-icons/md"
 import {
   Modal,
   ModalOverlay,
@@ -38,9 +35,7 @@ export const Payment = () => {
   const { user, logout } = useUserAuth();
   const [latestBooking, setLatestBooking] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("cash")
   const [processing, setProcessing] = useState(false)
-  const [paymentsEnabled, setPaymentsEnabled] = useState(false)
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -80,19 +75,6 @@ export const Payment = () => {
     fetchLatestBooking();
   }, [user]);
 
-  // Check if payments are enabled
-  useEffect(() => {
-    const checkPayments = async () => {
-      try {
-        const response = await paymentAPI.getStatus();
-        setPaymentsEnabled(response.data?.data?.razorpay === true);
-      } catch {
-        setPaymentsEnabled(false);
-      }
-    };
-    checkPayments();
-  }, []);
-
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const name = latestBooking?.turfName || '';
@@ -101,76 +83,7 @@ export const Payment = () => {
   const bookingDate = latestBooking?.bookingDate || '';
   const amount = latestBooking?.turfPrice || 0;
 
-  const handleRazorpayPayment = async () => {
-    if (!paymentsEnabled) {
-      toast({
-        title: 'Online payments unavailable',
-        description: 'Please select Pay at Venue instead.',
-        status: 'warning',
-        duration: 3000,
-      });
-      return;
-    }
-
-    try {
-      setProcessing(true)
-      const orderResponse = await paymentAPI.createRazorpayOrder({
-        amount: amount,
-        currency: 'INR',
-        receipt: `booking_${latestBooking?.id}_${Date.now()}`
-      })
-
-      const { orderId, amount: orderAmount, currency, keyId } = orderResponse.data.data
-
-      const options = {
-        key: keyId,
-        amount: orderAmount,
-        currency: currency,
-        name: 'TurfNow',
-        description: `Booking for ${name}`,
-        order_id: orderId,
-        handler: async function (response) {
-          try {
-            await paymentAPI.verifyRazorpayPayment({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            })
-            toast({
-              title: 'Payment Successful',
-              description: 'Your booking has been confirmed!',
-              status: 'success',
-              duration: 3000,
-            })
-            onOpen()
-          } catch (error) {
-            toast({
-              title: 'Payment Verification Failed',
-              description: error.response?.data?.error || 'Please contact support',
-              status: 'error',
-              duration: 5000,
-            })
-          }
-        },
-        prefill: { email: user.email },
-        theme: { color: '#DC2626' },
-      }
-
-      const razorpay = new window.Razorpay(options)
-      razorpay.open()
-    } catch (error) {
-      toast({
-        title: 'Payment Failed',
-        description: error.response?.data?.error || 'Something went wrong',
-        status: 'error',
-        duration: 3000,
-      })
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  const handleCashPayment = async () => {
+  const handlePayment = async () => {
     try {
       setProcessing(true)
       toast({
@@ -189,14 +102,6 @@ export const Payment = () => {
       })
     } finally {
       setProcessing(false)
-    }
-  }
-
-  const handlePayment = () => {
-    if (paymentMethod === 'razorpay') {
-      handleRazorpayPayment()
-    } else {
-      handleCashPayment()
     }
   }
 
@@ -345,7 +250,7 @@ export const Payment = () => {
             </VStack>
           </Box>
 
-          {/* Payment Method Card */}
+          {/* Payment Information Card */}
           <Box 
             bg="white" 
             borderRadius={{ base: 'lg', md: 'xl' }} 
@@ -361,67 +266,31 @@ export const Payment = () => {
               fontFamily="'Poppins', sans-serif"
               mb={{ base: 3, md: 4 }}
             >
-              Select Payment Method
+              Payment Information
             </Text>
 
-            <RadioGroup onChange={setPaymentMethod} value={paymentMethod}>
-              <Stack spacing={{ base: 2, md: 3 }}>
-                {paymentsEnabled && (
-                <Box 
-                  p={{ base: 3, md: 4 }} 
-                  borderRadius="lg" 
-                  border="2px solid"
-                  borderColor={paymentMethod === 'razorpay' ? 'red.500' : 'gray.200'}
-                  bg={paymentMethod === 'razorpay' ? 'red.50' : 'white'}
-                  cursor="pointer"
-                  onClick={() => setPaymentMethod('razorpay')}
-                  transition="all 0.2s"
-                >
-                  <HStack justify="space-between">
-                    <HStack spacing={{ base: 2, md: 3 }}>
-                      <Icon as={MdPayment} color="red.500" boxSize={{ base: 5, md: 6 }} />
-                      <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize={{ base: 'sm', md: 'md' }}>Pay Online</Text>
-                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500">
-                          Card, UPI, Net Banking
-                        </Text>
-                      </VStack>
-                    </HStack>
-                    <Radio value="razorpay" colorScheme="red" />
-                  </HStack>
-                </Box>
-                )}
-
-                <Box 
-                  p={{ base: 3, md: 4 }} 
-                  borderRadius="lg" 
-                  border="2px solid"
-                  borderColor={paymentMethod === 'cash' ? 'red.500' : 'gray.200'}
-                  bg={paymentMethod === 'cash' ? 'red.50' : 'white'}
-                  cursor="pointer"
-                  onClick={() => setPaymentMethod('cash')}
-                  transition="all 0.2s"
-                >
-                  <HStack justify="space-between">
-                    <HStack spacing={{ base: 2, md: 3 }}>
-                      <Icon as={MdAccountBalanceWallet} color="green.500" boxSize={{ base: 5, md: 6 }} />
-                      <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize={{ base: 'sm', md: 'md' }}>Pay at Venue</Text>
-                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500">
-                          Pay cash when you arrive
-                        </Text>
-                      </VStack>
-                    </HStack>
-                    <Radio value="cash" colorScheme="red" />
-                  </HStack>
-                </Box>
-              </Stack>
-            </RadioGroup>
+            <Box 
+              p={{ base: 3, md: 4 }} 
+              borderRadius="lg" 
+              border="2px solid"
+              borderColor="green.200"
+              bg="green.50"
+              mb={{ base: 4, md: 6 }}
+            >
+              <HStack spacing={{ base: 2, md: 3 }}>
+                <Icon as={MdAccountBalanceWallet} color="green.500" boxSize={{ base: 5, md: 6 }} />
+                <VStack align="start" spacing={0}>
+                  <Text fontWeight="bold" fontSize={{ base: 'sm', md: 'md' }}>Pay at Venue</Text>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+                    Pay cash when you arrive at the turf
+                  </Text>
+                </VStack>
+              </HStack>
+            </Box>
 
             <Button
               w="100%"
               size={{ base: 'md', md: 'lg' }}
-              mt={{ base: 4, md: 6 }}
               bg="linear-gradient(135deg, #DC2626, #B91C1C)"
               color="white"
               fontWeight="bold"
@@ -432,7 +301,7 @@ export const Payment = () => {
               loadingText="Processing..."
               fontSize={{ base: 'sm', md: 'md' }}
             >
-              {paymentMethod === 'razorpay' ? `Pay ₹${amount}` : 'Confirm Booking'}
+              Confirm Booking
             </Button>
           </Box>
         </Box>
@@ -469,11 +338,9 @@ export const Payment = () => {
                 <Text color="gray.600" fontSize={{ base: 'sm', md: 'md' }}>Amount</Text>
                 <Text fontWeight="bold" color="red.500" fontSize={{ base: 'sm', md: 'md' }}>₹{amount}</Text>
               </HStack>
-              {paymentMethod === 'cash' && (
-                <Badge colorScheme="orange" p={2} borderRadius="md" fontSize="xs">
-                  Pay cash at the venue
-                </Badge>
-              )}
+              <Badge colorScheme="orange" p={2} borderRadius="md" fontSize="xs">
+                Pay cash at the venue
+              </Badge>
             </VStack>
           </ModalBody>
           <ModalFooter pt={0} pb={{ base: 4, md: 6 }} gap={{ base: 2, md: 3 }} flexDirection={{ base: 'column', sm: 'row' }}>

@@ -11,7 +11,6 @@ import { existsSync } from 'fs';
 // Import routes
 import turfsRouter from './routes/turfs.js';
 import bookingsRouter from './routes/bookings.js';
-import paymentsRouter from './routes/payments.js';
 import reviewsRouter from './routes/reviews.js';
 import adminRouter from './routes/admin.js';
 import ownersRouter from './routes/owners.js';
@@ -121,7 +120,6 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/turfs', turfsRouter);
 app.use('/api/bookings', bookingsRouter);
-app.use('/api/payments', paymentsRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/owners', ownersRouter);

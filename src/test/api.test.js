@@ -28,7 +28,7 @@ vi.mock('axios', () => {
 });
 
 describe('API Service', () => {
-  let turfAPI, bookingAPI, paymentAPI, reviewAPI, adminAPI, ownerAPI;
+  let turfAPI, bookingAPI, reviewAPI, adminAPI, ownerAPI;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -36,7 +36,6 @@ describe('API Service', () => {
     const module = await import('../services/api.js');
     turfAPI = module.turfAPI;
     bookingAPI = module.bookingAPI;
-    paymentAPI = module.paymentAPI;
     reviewAPI = module.reviewAPI;
     adminAPI = module.adminAPI;
     ownerAPI = module.ownerAPI;
@@ -79,24 +78,6 @@ describe('API Service', () => {
 
     it('has getBookedSlots method', () => {
       expect(typeof bookingAPI.getBookedSlots).toBe('function');
-    });
-  });
-
-  describe('paymentAPI', () => {
-    it('has getStatus method', () => {
-      expect(typeof paymentAPI.getStatus).toBe('function');
-    });
-
-    it('has createRazorpayOrder method', () => {
-      expect(typeof paymentAPI.createRazorpayOrder).toBe('function');
-    });
-
-    it('has verifyRazorpayPayment method', () => {
-      expect(typeof paymentAPI.verifyRazorpayPayment).toBe('function');
-    });
-
-    it('has createStripeIntent method', () => {
-      expect(typeof paymentAPI.createStripeIntent).toBe('function');
     });
   });
 

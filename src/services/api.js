@@ -60,13 +60,7 @@ export const bookingAPI = {
   getBookedSlots: (turfName, date) => api.get(`/bookings/slots/${encodeURIComponent(turfName)}/${date}`),
 };
 
-// Payment API
-export const paymentAPI = {
-  getStatus: () => api.get('/payments/status'),
-  createRazorpayOrder: (data) => api.post('/payments/razorpay/create-order', data),
-  verifyRazorpayPayment: (data) => api.post('/payments/razorpay/verify', data),
-  createStripeIntent: (data) => api.post('/payments/stripe/create-intent', data),
-};
+// Payment API (removed - cash-only payments now)
 
 // Review API
 export const reviewAPI = {
