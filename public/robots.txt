@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /owner/
+Disallow: /payment
+Disallow: /booking
+
+Sitemap: https://turfnow.com/sitemap.xml

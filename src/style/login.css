@@ -1,0 +1,107 @@
+﻿/* ===================================
+   LOGIN/SIGNUP PAGE - Modern Design
+   =================================== */
+
+#mainLoginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  padding: 1rem;
+}
+
+/* Background */
+#loginBg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#loginBg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.08;
+}
+
+#loginBg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
+}
+
+/* Login Form Card */
+#loginform {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.5s ease-out;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive - Tablets */
+@media (max-width: 768px) {
+  #mainLoginContainer {
+    padding: 1.5rem 1rem;
+  }
+
+  #loginform {
+    padding: 2rem 1.5rem;
+    border-radius: 1.25rem;
+    max-width: 380px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  #mainLoginContainer {
+    padding: 1rem 0.75rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+
+  #loginform {
+    padding: 1.75rem 1.25rem;
+    border-radius: 1rem;
+    max-width: 100%;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  #mainLoginContainer {
+    padding: 0.75rem 0.5rem;
+    padding-top: 1.5rem;
+  }
+
+  #loginform {
+    padding: 1.5rem 1rem;
+    border-radius: 0.875rem;
+  }
+}

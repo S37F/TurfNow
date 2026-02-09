@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper: Check if user is admin
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    // Helper: Check if user is an approved owner
+    function isOwner() {
+      return request.auth.token.owner == true;
+    }
+    
+    // Sport collections (football, cricket, basketball, badminton)
+    // Anyone authenticated can read turfs; only owners and admins can write
+    match /{sport}/{turfId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isOwner() || isAdmin());
+      allow update, delete: if isAuthenticated() && (
+        isAdmin() || 
+        (isOwner() && resource.data.ownerId == request.auth.uid)
+      );
+    }
+    
+    // Reviews - authenticated users can read, only review author can write/delete
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

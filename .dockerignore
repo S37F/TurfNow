@@ -1,0 +1,15 @@
+node_modules
+server/node_modules
+.env
+.env.local
+.env.production
+server/.env
+server/config/serviceAccountKey.json
+.git
+.gitignore
+*.md
+.eslintrc.json
+.vscode
+build
+.DS_Store
+start-log.txt

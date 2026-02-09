@@ -1,0 +1,758 @@
+﻿/* ===================================
+   TURF LISTING PAGE - Modern Design
+   =================================== */
+
+/* Main Container */
+#mainContainer {
+  min-height: 100vh;
+  background: #F1F5F9;
+}
+
+/* ========== HEADER SECTION ========== */
+.turf-header {
+  position: relative;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.turf-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.turf-header-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.turf-header-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
+}
+
+.turf-header-content {
+  position: relative;
+  z-index: 10;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 5%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Top Navigation */
+.turf-top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.turf-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.turf-location {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 2rem;
+}
+
+.turf-location svg {
+  color: #DC2626;
+  font-size: 1.25rem;
+}
+
+/* Hero Text */
+.turf-hero-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.turf-hero-text h1 {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 800;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
+}
+
+.turf-hero-text h1 span {
+  background: linear-gradient(135deg, #DC2626, #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.turf-hero-text p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  max-width: 500px;
+}
+
+/* Sport Tabs */
+.sport-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  flex-wrap: wrap;
+}
+
+.sport-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.sport-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.sport-tab:hover::before {
+  left: 100%;
+}
+
+.sport-tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(220, 38, 38, 0.6);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.sport-tab.active {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+  transform: translateY(-2px);
+}
+
+.sport-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.sport-name {
+  display: block;
+}
+
+/* ========== CONTENT SECTION ========== */
+#headingTurf {
+  max-width: 1400px;
+  margin: 2rem auto 1.5rem;
+  padding: 0 5%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+  font-family: 'Poppins', sans-serif;
+  text-transform: capitalize;
+}
+
+#turfContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 5% 4rem;
+}
+
+/* ========== FILTER STYLES ========== */
+.filter-container {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E2E8F0;
+}
+
+/* ========== CARD GRID ========== */
+.turf-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ========== TURF CARD ========== */
+.turf-card {
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
+  transition: all 0.3s ease;
+}
+
+.turf-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(220, 38, 38, 0.12);
+  border-color: #DC2626;
+}
+
+.turf-card-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.turf-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.turf-card:hover .turf-card-image img {
+  transform: scale(1.08);
+}
+
+.turf-card-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #10B981;
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.turf-card-content {
+  padding: 1.25rem;
+}
+
+.turf-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.turf-card-location {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #64748B;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.turf-card-location svg {
+  color: #DC2626;
+  font-size: 1rem;
+}
+
+.turf-card-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.turf-card-rating svg {
+  color: #F59E0B;
+}
+
+.turf-card-rating span {
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.turf-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid #E2E8F0;
+}
+
+.turf-card-price {
+  display: flex;
+  flex-direction: column;
+}
+
+.turf-card-price small {
+  color: #64748B;
+  font-size: 0.75rem;
+}
+
+.turf-card-price strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #DC2626;
+}
+
+.turf-card-btn {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+}
+
+.turf-card-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.turf-card-btn:hover::before {
+  left: 100%;
+}
+
+.turf-card-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+}
+
+.turf-card-btn:active {
+  transform: translateY(-1px);
+}
+
+.turf-card-facilities {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.facility-tag {
+  background: #F1F5F9;
+  color: #475569;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ========== TIME MODAL ========== */
+#timeButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+#timeButtons button {
+  padding: 1rem 1.25rem;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+  color: #0F172A;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+#timeButtons button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 50%;
+  transition: width 0.4s ease, height 0.4s ease;
+  transform: translate(-50%, -50%);
+}
+
+#timeButtons button:hover:not(:disabled)::after {
+  width: 200%;
+  height: 200%;
+}
+
+#timeButtons button:hover:not(:disabled) {
+  border-color: #DC2626;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+}
+
+#timeButtons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F1F5F9;
+  color: #94A3B8;
+  border-color: transparent;
+}
+
+#timeButtons button.selected {
+  border-color: #DC2626;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35);
+}
+
+/* ========== LOADING ========== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #E2E8F0;
+  border-top-color: #DC2626;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #64748B;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #0F172A;
+  margin-bottom: 0.5rem;
+}
+
+/* ========== RESPONSIVE ========== */
+
+/* Large Tablets */
+@media (max-width: 1200px) {
+  .turf-header-content {
+    padding: 0 4%;
+  }
+
+  #headingTurf {
+    padding: 0 4%;
+  }
+
+  #turfContainer {
+    padding: 0 4% 4rem;
+  }
+}
+
+/* Tablets */
+@media (max-width: 992px) {
+  .turf-header {
+    min-height: 350px;
+  }
+
+  .turf-hero-text h1 {
+    font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+
+  .sport-tab {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .turf-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+/* Mobile Landscape & Small Tablets */
+@media (max-width: 768px) {
+  .turf-header {
+    min-height: auto;
+    padding-bottom: 1rem;
+  }
+
+  .turf-header-content {
+    padding: 0 3%;
+  }
+
+  .turf-top-nav {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+
+  .turf-nav-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .turf-hero-text {
+    padding: 1.25rem 0;
+  }
+
+  .turf-hero-text h1 {
+    font-size: 1.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .turf-hero-text p {
+    font-size: 0.9rem;
+    padding: 0 0.5rem;
+  }
+
+  .sport-tabs {
+    padding: 1rem 0;
+    gap: 0.5rem;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .sport-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sport-tab {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .sport-name {
+    display: none;
+  }
+
+  .sport-icon {
+    font-size: 1.4rem;
+  }
+
+  #headingTurf {
+    font-size: 1.25rem;
+    margin: 1.5rem auto 1rem;
+    padding: 0 3%;
+  }
+
+  #turfContainer {
+    padding: 0 3% 3rem;
+  }
+
+  .filter-container {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .turf-card-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .turf-card-image {
+    height: 180px;
+  }
+
+  .turf-card-content {
+    padding: 1rem;
+  }
+
+  .turf-card-title {
+    font-size: 1.125rem;
+  }
+
+  .turf-card-footer {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .turf-card-price {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .turf-card-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.875rem 1rem;
+  }
+
+  #timeButtons {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.5rem;
+  }
+
+  #timeButtons button {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .loading-container {
+    padding: 3rem 1rem;
+  }
+
+  .empty-state {
+    padding: 3rem 1rem;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  .turf-header-content {
+    padding: 0 3%;
+  }
+
+  .turf-location {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .turf-location span {
+    display: none;
+  }
+
+  .turf-hero-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .turf-hero-text p {
+    font-size: 0.85rem;
+  }
+
+  .sport-tab {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .sport-icon {
+    font-size: 1.25rem;
+  }
+
+  #headingTurf {
+    font-size: 1.125rem;
+  }
+
+  .turf-card-image {
+    height: 160px;
+  }
+
+  .turf-card-badge {
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .turf-card-content {
+    padding: 0.875rem;
+  }
+
+  .turf-card-title {
+    font-size: 1rem;
+  }
+
+  .turf-card-location {
+    font-size: 0.8rem;
+  }
+
+  .turf-card-rating span {
+    font-size: 0.85rem;
+  }
+
+  .turf-card-price strong {
+    font-size: 1.125rem;
+  }
+
+  .turf-card-btn {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .facility-tag {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  #timeButtons button {
+    padding: 0.625rem 0.35rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .turf-hero-text h1 {
+    font-size: 1.125rem;
+  }
+
+  .turf-card-title {
+    font-size: 0.95rem;
+  }
+
+  .turf-card-btn {
+    font-size: 0.8rem;
+  }
+}
