@@ -12,15 +12,23 @@ const parsePrivateKey = (key) => {
   if (!key || key === 'your_private_key_here' || key.includes('YOUR_PRIVATE_KEY_HERE')) {
     return null;
   }
-  
-  // If it's already properly formatted with real newlines
-  if (key.includes('-----BEGIN PRIVATE KEY-----') && key.includes('\n')) {
-    return key;
+
+  let parsed = key;
+
+  // Strip surrounding quotes if present (single or double)
+  if ((parsed.startsWith('"') && parsed.endsWith('"')) ||
+      (parsed.startsWith("'") && parsed.endsWith("'"))) {
+    parsed = parsed.slice(1, -1);
   }
-  
-  // Replace escaped newlines (\\n or \n as string)
-  let parsed = key.replace(/\\n/g, '\n');
-  
+
+  // Always replace literal \n sequences with real newlines
+  parsed = parsed.replace(/\\n/g, '\n');
+
+  // Validate it looks like a PEM key
+  if (!parsed.includes('-----BEGIN PRIVATE KEY-----')) {
+    return null;
+  }
+
   return parsed;
 };
 
