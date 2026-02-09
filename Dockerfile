@@ -17,14 +17,14 @@ COPY index.html vite.config.js ./
 COPY public/ ./public/
 COPY src/ ./src/
 
-# Build args for environment variables (passed at build time)
-ARG VITE_FIREBASE_API_KEY
-ARG VITE_FIREBASE_AUTH_DOMAIN
-ARG VITE_FIREBASE_PROJECT_ID
-ARG VITE_FIREBASE_STORAGE_BUCKET
-ARG VITE_FIREBASE_MESSAGING_SENDER_ID
-ARG VITE_FIREBASE_APP_ID
-ARG VITE_FIREBASE_DATABASE_URL
+# Build args for environment variables (defaults for Render; override via --build-arg)
+ARG VITE_FIREBASE_API_KEY=AIzaSyDmQj3Fq_F0dhj9E-xBzAjgWtWGQG0NfkA
+ARG VITE_FIREBASE_AUTH_DOMAIN=turfnow-7036b.firebaseapp.com
+ARG VITE_FIREBASE_PROJECT_ID=turfnow-7036b
+ARG VITE_FIREBASE_STORAGE_BUCKET=turfnow-7036b.firebasestorage.app
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID=837366155197
+ARG VITE_FIREBASE_APP_ID=1:837366155197:web:99701fb93ebbee293cf4d4
+ARG VITE_FIREBASE_DATABASE_URL=https://turfnow-7036b-default-rtdb.firebaseio.com
 ARG VITE_API_URL=/api
 
 # Build frontend
