@@ -10,6 +10,7 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 // Helper function to parse private key from various formats
 const parsePrivateKey = (key) => {
   if (!key || key === 'your_private_key_here' || key.includes('YOUR_PRIVATE_KEY_HERE')) {
+    console.log('🔍 Private key is missing or placeholder');
     return null;
   }
 
@@ -26,6 +27,11 @@ const parsePrivateKey = (key) => {
 
   // Validate it looks like a PEM key
   if (!parsed.includes('-----BEGIN PRIVATE KEY-----')) {
+    console.log('🔍 Private key format check:');
+    console.log('  - Length:', parsed.length);
+    console.log('  - First 50 chars:', parsed.substring(0, 50));
+    console.log('  - Last 50 chars:', parsed.substring(parsed.length - 50));
+    console.log('  - Contains BEGIN marker:', parsed.includes('BEGIN PRIVATE KEY'));
     return null;
   }
 
