@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import "../style/payment.css"
 import { IoMdArrowRoundBack } from "react-icons/io"
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useUserAuth } from '../context/Authcontext'
 import { bookingAPI } from '../services/api'
 import { 
@@ -37,7 +36,6 @@ export const Payment = () => {
   const [bookingLoading, setBookingLoading] = useState(true);
   const [processing, setProcessing] = useState(false)
   const toast = useToast()
-  const navigate = useNavigate()
 
   const handleLogout = async () => {
     try {

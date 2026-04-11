@@ -1,7 +1,7 @@
 {
   "name": "TurfNow - Sports Ground Booking",
   "short_name": "TurfNow",
-  "description": "Book your nearest turf instantly! Easy online booking for sports grounds.",
+  "description": "Book sports turfs online.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F1F5F9",
@@ -13,20 +13,9 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
     }
   ],
-  "categories": ["sports", "lifestyle", "utilities"],
+  "categories": ["sports", "lifestyle"],
   "lang": "en",
-  "dir": "ltr",
-  "prefer_related_applications": false
+  "dir": "ltr"
 }

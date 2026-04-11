@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { MemoryRouter } from 'react-router-dom';
-import NotFound from '../pages/NotFound';
+import { NotFound } from '../pages/NotFound';
 
 const renderNotFound = () => {
   return render(

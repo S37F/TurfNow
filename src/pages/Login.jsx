@@ -7,24 +7,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { useUserAuth } from "../context/Authcontext";
 import Logo from "../components/Logo";
 import { FiMail, FiLock } from "react-icons/fi";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../firebase-config/config";
+import { supabase } from "../lib/supabase";
 
-const getFirebaseErrorMessage = (code) => {
-  switch (code) {
-    case 'auth/invalid-email': return 'Invalid email address.';
-    case 'auth/user-disabled': return 'This account has been disabled.';
-    case 'auth/user-not-found': return 'No account found with this email.';
-    case 'auth/wrong-password': return 'Incorrect password.';
-    case 'auth/invalid-credential': return 'Invalid email or password.';
-    case 'auth/too-many-requests': return 'Too many attempts. Please try again later.';
-    case 'auth/network-request-failed': return 'Network error. Check your connection.';
-    case 'auth/operation-not-allowed': return 'This sign-in method is not enabled. Please enable Email/Password in Firebase Console → Authentication → Sign-in method.';
-    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.': return 'Invalid Firebase API key. Check your environment configuration.';
-    case 'auth/configuration-not-found': return 'Firebase Auth is not configured for this project. Enable Authentication in Firebase Console.';
-    case 'auth/admin-restricted-operation': return 'Sign-up is restricted. Contact the administrator.';
-    default: return `Login failed (${code || 'unknown'}). Please try again.`;
-  }
+const getAuthErrorMessage = (err) => {
+  const msg = err?.message || '';
+  const lower = msg.toLowerCase();
+  if (lower.includes('invalid login credentials')) return 'Incorrect email or password.';
+  if (lower.includes('email not confirmed')) return 'Please confirm your email before signing in.';
+  if (lower.includes('user already registered')) return 'An account already exists with this email.';
+  if (lower.includes('invalid email')) return 'Invalid email address.';
+  if (lower.includes('password')) return msg;
+  if (lower.includes('network')) return 'Network error. Check your connection.';
+  return msg || 'Something went wrong. Please try again.';
 };
 
 export const Login = () => {
@@ -42,7 +36,10 @@ export const Login = () => {
         return;
       }
       try {
-        await sendPasswordResetEmail(auth, email);
+        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/login`,
+        });
+        if (resetErr) throw resetErr;
         toast({
           title: "Reset email sent!",
           description: "Check your inbox for a password reset link.",
@@ -50,7 +47,7 @@ export const Login = () => {
           duration: 5000,
         });
       } catch (err) {
-        setError(getFirebaseErrorMessage(err.code));
+        setError(getAuthErrorMessage(err));
       }
     };
 
@@ -78,7 +75,7 @@ export const Login = () => {
         });
         navigate("/turf")
       } catch (err) {
-        setError(getFirebaseErrorMessage(err.code))
+        setError(getAuthErrorMessage(err))
       } finally {
         setLoading(false);
       }
@@ -86,12 +83,11 @@ export const Login = () => {
     
     const signinWithgoogle = async () => {
       setLoading(true);
+      setError("");
       try {
         await googleSignin()
-        navigate("/turf")
       } catch (err) {
-        setError(getFirebaseErrorMessage(err.code))
-      } finally {
+        setError(getAuthErrorMessage(err))
         setLoading(false);
       }
     }
@@ -102,7 +98,6 @@ export const Login = () => {
         <img src={loginBg} alt="background" />
       </Box>
       <Box id='loginform'>
-        {/* Logo */}
         <Box textAlign="center" mb={{ base: 1, md: 2 }}>
           <Logo variant="full" size="md" color="gradient" />
         </Box>

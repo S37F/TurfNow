@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Badge, Heading, Text, Button, Image, HStack, VStack, Flex, Icon } from '@chakra-ui/react';
 import { AiFillStar } from 'react-icons/ai';
 import { MdLocationOn } from 'react-icons/md';
-import { FiClock, FiUsers } from 'react-icons/fi';
+import { FiUsers } from 'react-icons/fi';
 
 export const TurfCard = ({ turf, onBookClick }) => {
   return (

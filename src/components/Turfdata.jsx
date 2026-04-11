@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase-config/config";
-import { collection, getDocs } from "firebase/firestore";
 import { SimpleGrid, Box, Text, Center, VStack, Button, Alert, AlertIcon } from "@chakra-ui/react";
 import { Loading } from "./Loading";
 import { TimeSelectModal } from "./TimeSelectModal";
@@ -29,29 +27,14 @@ export const Turfdata = (prop) => {
     setLoading(true);
     const getData = async () => {
       try {
-        // Try Firestore client SDK first
-        const ref = collection(db, turf);
-        const turfData = await getDocs(ref);
-        const filterData = turfData.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-        setData(filterData);
-        setFilteredData(filterData);
+        const res = await turfAPI.getTurfsBySport(turf);
+        const apiData = res.data?.data || [];
+        setData(apiData);
+        setFilteredData(apiData);
         setError(null);
-      } catch (err) {
-        console.warn('Firestore client failed, falling back to API:', err.message);
-        try {
-          // Fallback: fetch from backend API
-          const res = await turfAPI.getTurfsBySport(turf);
-          const apiData = res.data?.data || [];
-          setData(apiData);
-          setFilteredData(apiData);
-          setError(null);
-        } catch (apiErr) {
-          console.error('API fallback also failed:', apiErr);
-          setError('Failed to load turfs. Please try again.');
-        }
+      } catch (apiErr) {
+        console.error('Failed to load turfs:', apiErr);
+        setError('Failed to load turfs. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -66,19 +49,16 @@ export const Turfdata = (prop) => {
   const applyFilters = () => {
     let filtered = [...data];
 
-    // Search filter
     if (filters.search) {
       filtered = filtered.filter((item) =>
         item.name.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
-    // City filter
     if (filters.city) {
       filtered = filtered.filter((item) => item.city === filters.city);
     }
 
-    // Price range filter
     if (filters.priceRange) {
       filtered = filtered.filter(
         (item) =>
@@ -87,7 +67,6 @@ export const Turfdata = (prop) => {
       );
     }
 
-    // Sort
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case 'price-low':
@@ -133,7 +112,6 @@ export const Turfdata = (prop) => {
  
   return (
     <Box bg="#F1F5F9" minH="50vh" pb={8}>
-      {/* Error State */}
       {error && (
         <Box maxW="1400px" mx="auto" px={{ base: 4, md: 6 }} pt={6}>
           <Alert status="error" borderRadius="lg" mb={4}>
@@ -143,7 +121,6 @@ export const Turfdata = (prop) => {
         </Box>
       )}
 
-      {/* Filters */}
       <Box maxW="1400px" mx="auto" px={{ base: 4, md: 6 }} pt={6}>
         <TurfFilters
           filters={filters}
@@ -152,14 +129,12 @@ export const Turfdata = (prop) => {
         />
       </Box>
 
-      {/* Results Header */}
       <Box maxW="1400px" mx="auto" px={{ base: 4, md: 6 }} mb={4}>
         <p id="headingTurf">
           {filteredData.length} {turf} {filteredData.length === 1 ? 'turf' : 'turfs'} available
         </p>
       </Box>
 
-      {/* Turf Cards */}
       <Box maxW="1400px" mx="auto" px={{ base: 4, md: 6 }}>
         {filteredData.length === 0 ? (
           <Box 

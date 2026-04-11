@@ -8,6 +8,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     css: true,
+    exclude: ['**/node_modules/**', '**/dist/**', '**/server/**'],
+    env: {
+      VITE_SUPABASE_URL: 'https://vitest-placeholder.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'vitest-placeholder-anon-key',
+      VITE_API_URL: 'http://127.0.0.1:5000/api',
+    },
   },
   server: {
     port: 3001,
@@ -32,8 +38,8 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // Chakra UI chunk
           'vendor-chakra': ['@chakra-ui/react', '@emotion/react', '@emotion/styled'],
-          // Firebase chunk
-          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/database', 'firebase/firestore'],
+          // Supabase client chunk
+          'vendor-supabase': ['@supabase/supabase-js'],
         },
         // Asset file naming
         chunkFileNames: 'assets/js/[name]-[hash].js',

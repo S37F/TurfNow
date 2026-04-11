@@ -1,91 +1,88 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    GoogleAuthProvider,
-    signInWithPopup
-} from "firebase/auth"
-import { auth } from "../firebase-config/config";
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 
 const userAuthContext = createContext();
 
+function mapUser(u) {
+  if (!u) return null;
+  return { ...u, uid: u.id };
+}
+
 export function UserAuthContextProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isOwner, setIsOwner] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
-    function signup(email, password) {
-        return createUserWithEmailAndPassword(auth, email, password);
+  const syncClaims = useCallback((sessionUser) => {
+    if (!sessionUser) {
+      setIsAdmin(false);
+      setIsOwner(false);
+      return;
     }
+    setIsAdmin(sessionUser.app_metadata?.admin === true);
+    setIsOwner(sessionUser.app_metadata?.owner === true);
+  }, []);
 
-    function login(email, password) {
-        return signInWithEmailAndPassword(auth, email, password);
-    }
+  async function signup(email, password) {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    return { user: data.user ? mapUser(data.user) : null };
+  }
 
-    function logout() {
-        return signOut(auth);
-    }
+  async function login(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }
 
-    function googleSignin() {
-        const googleAuthProvider = new GoogleAuthProvider();
-        return signInWithPopup(auth, googleAuthProvider);
-    }
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  }
 
-    // Force refresh token claims (call after backend sets custom claims)
-    const refreshClaims = useCallback(async () => {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        try {
-            const tokenResult = await currentUser.getIdTokenResult(true);
-            setIsAdmin(tokenResult.claims.admin === true);
-            setIsOwner(tokenResult.claims.owner === true);
-        } catch (err) {
-            console.error("Failed to refresh claims:", err);
-        }
-    }, []);
+  async function googleSignin() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/turf` },
+    });
+    if (error) throw error;
+  }
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                try {
-                    const tokenResult = await currentUser.getIdTokenResult();
-                    setIsAdmin(tokenResult.claims.admin === true);
-                    setIsOwner(tokenResult.claims.owner === true);
-                } catch (err) {
-                    console.error("Error getting token claims:", err);
-                    setIsAdmin(false);
-                    setIsOwner(false);
-                }
-            } else {
-                setIsAdmin(false);
-                setIsOwner(false);
-            }
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
+  const refreshClaims = useCallback(async () => {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session?.user) return;
+    syncClaims(data.session.user);
+  }, [syncClaims]);
 
-    return (
-        <userAuthContext.Provider value={{
-            user,
-            loading,
-            isAdmin,
-            isOwner,
-            signup,
-            login,
-            logout,
-            googleSignin,
-            refreshClaims
-        }}>
-            {children}
-        </userAuthContext.Provider>
-    );
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? mapUser(session.user) : null);
+      syncClaims(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [syncClaims]);
+
+  return (
+    <userAuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAdmin,
+        isOwner,
+        signup,
+        login,
+        logout,
+        googleSignin,
+        refreshClaims,
+      }}
+    >
+      {children}
+    </userAuthContext.Provider>
+  );
 }
 
 export function useUserAuth() {
-    return useContext(userAuthContext);
+  return useContext(userAuthContext);
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useUserAuth } from "../context/Authcontext";
 import { bookingAPI } from "../services/api";
 import { 
@@ -28,14 +28,12 @@ import { BookingSkeleton } from "../components/BookingSkeleton";
 import { PopoverProfile } from "../components/Popover";
 import Logo from "../components/Logo";
 import { MdLocationOn, MdAccessTime, MdCalendarToday, MdDelete } from "react-icons/md";
-import "../style/payment.css";
 
 export const Bookings = () => {
   const { user, logout } = useUserAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
-  const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();

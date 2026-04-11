@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react'
-import { Route, Routes, Navigate } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 import { UserAuthContextProvider } from '../context/Authcontext'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { AdminProtectedRoute } from '../components/AdminProtectedRoute'

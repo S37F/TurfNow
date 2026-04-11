@@ -112,17 +112,10 @@ export const OwnerSignup = () => {
 
     setLoading(true);
     try {
-      // Create Firebase account
-      const userCredential = await signup(email, password);
-      const uid = userCredential.user.uid;
+      await signup(email, password);
 
-      // Register as turf owner (pending approval)
       await api.post('/owners/register', {
-        uid,
-        email,
         ...formData,
-        status: 'pending',
-        createdAt: new Date().toISOString()
       });
 
       toast({

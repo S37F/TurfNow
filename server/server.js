@@ -49,10 +49,7 @@ const limiter = rateLimit({
   message: { success: false, error: 'Too many requests, please try again later.' }
 });
 
-// Middleware
-// When deployed on Cloud Run behind Firebase Hosting rewrites,
-// the API is pure backend — CSP headers are not relevant.
-// CSP is only needed when the server also serves the frontend (Docker mode).
+// CSP applies when this process also serves the built SPA (e.g. Docker); API-only deploys skip it.
 const servingFrontend = isProduction && existsSync(join(__dirname, 'public', 'index.html'));
 app.use(helmet({
   contentSecurityPolicy: servingFrontend ? {
@@ -64,23 +61,14 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
       connectSrc: [
         "'self'",
-        "https://identitytoolkit.googleapis.com",
-        "https://securetoken.googleapis.com",
-        "https://www.googleapis.com",
-        "https://firestore.googleapis.com",
-        "https://firebasestorage.googleapis.com",
-        "https://firebase.googleapis.com",
-        "https://turfnow-7036b-default-rtdb.firebaseio.com",
-        "wss://turfnow-7036b-default-rtdb.firebaseio.com",
+        "https://*.supabase.co",
+        "wss://*.supabase.co",
         "https://accounts.google.com",
         "https://apis.google.com",
-        "https://www.google-analytics.com",
-        "https://firebase-settings.crashlytics.com",
+        "https://www.googleapis.com",
         "https://*.googleapis.com",
-        "https://*.firebaseio.com",
-        "wss://*.firebaseio.com"
       ],
-      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com", "https://turfnow-7036b.firebaseapp.com"],
+      frameSrc: ["'self'", "https://accounts.google.com", "https://apis.google.com"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
     }

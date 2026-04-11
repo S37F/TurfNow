@@ -1,63 +1,105 @@
 import express from 'express';
-import { db, realtimeDb, auth } from '../config/firebase.js';
-import { verifyToken, isAdmin, isOwner } from '../middleware/auth.js';
+import { query } from '../config/db.js';
+import { getSupabaseAdmin } from '../config/supabaseAdmin.js';
+import { verifyToken, isAdmin } from '../middleware/auth.js';
 import { sendEmail, emailTemplates } from '../services/email.js';
 import { ALLOWED_SPORTS } from '../config/constants.js';
 
 const router = express.Router();
 
-// Register as turf owner (requires authentication)
+function rowToOwner(row) {
+  return {
+    id: row.user_id,
+    uid: row.user_id,
+    email: row.email,
+    fullName: row.full_name,
+    phone: row.phone,
+    businessName: row.business_name,
+    businessAddress: row.business_address,
+    city: row.city,
+    sportTypes: row.sport_types,
+    description: row.description,
+    status: row.status,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+    updatedAt: row.updated_at?.toISOString?.() ?? row.updated_at,
+    approvedAt: row.approved_at?.toISOString?.() ?? row.approved_at,
+    approvedBy: row.approved_by,
+    rejectedAt: row.rejected_at?.toISOString?.() ?? row.rejected_at,
+    rejectedBy: row.rejected_by,
+    rejectionReason: row.rejection_reason,
+    turfs: row.turfs,
+  };
+}
+
+function rowToTurf(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    address: row.address,
+    city: row.city,
+    image: row.image,
+    pricePerHour: Number(row.price_per_hour),
+    facilities: row.facilities,
+    size: row.size,
+    description: row.description,
+    ownerId: row.owner_id,
+    available: row.available,
+    rating: Number(row.rating),
+    totalReviews: row.total_reviews,
+    createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+    updatedAt: row.updated_at?.toISOString?.() ?? row.updated_at,
+  };
+}
+
 router.post('/register', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid;
     const email = req.user.email;
-    const { 
-      fullName, phone, businessName, 
-      businessAddress, city, sportTypes, description 
+    const {
+      fullName, phone, businessName,
+      businessAddress, city, sportTypes, description,
     } = req.body;
 
-    // Validate required fields
     if (!fullName || !phone || !businessName || !businessAddress || !city) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'All required fields must be provided: fullName, phone, businessName, businessAddress, city' 
+      return res.status(400).json({
+        success: false,
+        error: 'All required fields must be provided: fullName, phone, businessName, businessAddress, city',
       });
     }
 
-    // Basic phone validation
     if (!/^[\d\s+\-()]{7,15}$/.test(phone)) {
       return res.status(400).json({ success: false, error: 'Invalid phone number format' });
     }
 
-    // Check if owner already registered
-    const existingOwner = await realtimeDb.ref(`owners/${uid}`).get();
-    if (existingOwner.exists()) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'You have already registered as a turf owner' 
+    const existing = await query('SELECT 1 FROM owner_profiles WHERE user_id = $1::uuid', [uid]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'You have already registered as a turf owner',
       });
     }
 
-    // Create owner record with pending status (status set server-side only)
-    const ownerData = {
-      uid,
-      email,
-      fullName,
-      phone,
-      businessName,
-      businessAddress,
-      city,
-      sportTypes: sportTypes || [],
-      description: description || '',
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      turfs: [],
-    };
+    const now = new Date().toISOString();
+    await query(
+      `INSERT INTO owner_profiles (
+        user_id, email, full_name, phone, business_name, business_address, city,
+        sport_types, description, status, created_at, updated_at, turfs
+      ) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, 'pending', $10::timestamptz, $11::timestamptz, '[]'::jsonb)`,
+      [
+        uid,
+        email,
+        fullName,
+        phone,
+        businessName,
+        businessAddress,
+        city,
+        JSON.stringify(sportTypes || []),
+        description || '',
+        now,
+        now,
+      ]
+    );
 
-    await realtimeDb.ref(`owners/${uid}`).set(ownerData);
-
-    // Send confirmation email to owner
     try {
       await sendEmail(
         email,
@@ -68,10 +110,10 @@ router.post('/register', verifyToken, async (req, res) => {
       console.error('Failed to send registration email:', emailError.message);
     }
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       message: 'Registration submitted successfully. Pending admin approval.',
-      data: { uid, status: 'pending' }
+      data: { uid, status: 'pending' },
     });
   } catch (error) {
     console.error('Error registering owner:', error);
@@ -79,43 +121,64 @@ router.post('/register', verifyToken, async (req, res) => {
   }
 });
 
-// Get owner profile (owner only - authenticated)
 router.get('/profile', verifyToken, async (req, res) => {
   try {
-    const snapshot = await realtimeDb.ref(`owners/${req.user.uid}`).get();
-    
-    if (!snapshot.exists()) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Owner profile not found' 
-      });
+    const { rows } = await query('SELECT * FROM owner_profiles WHERE user_id = $1::uuid', [req.user.uid]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Owner profile not found' });
     }
 
-    res.json({ success: true, data: snapshot.val() });
+    res.json({ success: true, data: rowToOwner(rows[0]) });
   } catch (error) {
     console.error('Error fetching owner profile:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch profile' });
   }
 });
 
-// Update owner profile (owner only)
 router.put('/profile', verifyToken, async (req, res) => {
   try {
     const { fullName, phone, businessName, businessAddress, city, description } = req.body;
-    
-    const updates = {
-      updatedAt: new Date().toISOString()
-    };
 
-    // Only include provided fields
-    if (fullName) updates.fullName = fullName;
-    if (phone) updates.phone = phone;
-    if (businessName) updates.businessName = businessName;
-    if (businessAddress) updates.businessAddress = businessAddress;
-    if (city) updates.city = city;
-    if (description !== undefined) updates.description = description;
+    const updates = ['updated_at = $1::timestamptz'];
+    const params = [new Date().toISOString()];
+    let i = 2;
 
-    await realtimeDb.ref(`owners/${req.user.uid}`).update(updates);
+    if (fullName) {
+      updates.push(`full_name = $${i++}`);
+      params.push(fullName);
+    }
+    if (phone) {
+      updates.push(`phone = $${i++}`);
+      params.push(phone);
+    }
+    if (businessName) {
+      updates.push(`business_name = $${i++}`);
+      params.push(businessName);
+    }
+    if (businessAddress) {
+      updates.push(`business_address = $${i++}`);
+      params.push(businessAddress);
+    }
+    if (city) {
+      updates.push(`city = $${i++}`);
+      params.push(city);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${i++}`);
+      params.push(description);
+    }
+
+    params.push(req.user.uid);
+
+    const { rowCount } = await query(
+      `UPDATE owner_profiles SET ${updates.join(', ')} WHERE user_id = $${i}::uuid`,
+      params
+    );
+
+    if (rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Owner profile not found' });
+    }
 
     res.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
@@ -124,148 +187,136 @@ router.put('/profile', verifyToken, async (req, res) => {
   }
 });
 
-// ===== ADMIN ROUTES =====
-
-// Get all owner registrations (admin only)
 router.get('/all', verifyToken, isAdmin, async (req, res) => {
   try {
     const { status } = req.query;
-    
-    const snapshot = await realtimeDb.ref('owners').get();
-    const owners = [];
-    
-    snapshot.forEach(child => {
-      const owner = { id: child.key, ...child.val() };
-      if (!status || owner.status === status) {
-        owners.push(owner);
-      }
-    });
 
-    owners.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    let sql = 'SELECT * FROM owner_profiles';
+    const params = [];
+    if (status) {
+      sql += ' WHERE status = $1';
+      params.push(status);
+    }
+    sql += ' ORDER BY created_at DESC';
 
-    res.json({ success: true, data: owners });
+    const { rows } = await query(sql, params);
+    res.json({ success: true, data: rows.map(rowToOwner) });
   } catch (error) {
     console.error('Error fetching owners:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch owners' });
   }
 });
 
-// Approve owner registration (admin only — merges claims)
 router.post('/:ownerId/approve', verifyToken, isAdmin, async (req, res) => {
   try {
     const { ownerId } = req.params;
-    
-    const snapshot = await realtimeDb.ref(`owners/${ownerId}`).get();
-    if (!snapshot.exists()) {
+
+    const { rows } = await query('SELECT * FROM owner_profiles WHERE user_id = $1::uuid', [ownerId]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Owner not found' });
     }
 
-    const owner = snapshot.val();
-    
-    // Update owner status
-    await realtimeDb.ref(`owners/${ownerId}`).update({
-      status: 'approved',
-      approvedAt: new Date().toISOString(),
-      approvedBy: req.user.uid
+    const owner = rows[0];
+
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return res.status(503).json({ success: false, error: 'Auth admin not configured' });
+    }
+
+    const { data: existing, error: getErr } = await supabase.auth.admin.getUserById(ownerId);
+    if (getErr || !existing.user) {
+      return res.status(404).json({ success: false, error: 'Auth user not found' });
+    }
+
+    const meta = existing.user.app_metadata || {};
+    const { error: updErr } = await supabase.auth.admin.updateUserById(ownerId, {
+      app_metadata: { ...meta, owner: true },
     });
+    if (updErr) throw updErr;
 
-    // Merge custom claim (don't overwrite existing claims)
-    const user = await auth.getUser(ownerId);
-    const existingClaims = user.customClaims || {};
-    await auth.setCustomUserClaims(ownerId, { ...existingClaims, owner: true });
+    await query(
+      `UPDATE owner_profiles SET status = 'approved', approved_at = $1::timestamptz, approved_by = $2::uuid, updated_at = $1::timestamptz WHERE user_id = $3::uuid`,
+      [new Date().toISOString(), req.user.uid, ownerId]
+    );
 
-    // Send approval email
     try {
       await sendEmail(
         owner.email,
         'TurfNow - Your Owner Account is Approved! 🎉',
-        emailTemplates.ownerApproved({ fullName: owner.fullName, businessName: owner.businessName })
+        emailTemplates.ownerApproved({ fullName: owner.full_name, businessName: owner.business_name })
       );
     } catch (emailError) {
       console.error('Failed to send approval email:', emailError.message);
     }
 
-    res.json({ 
-      success: true, 
-      message: 'Owner approved successfully' 
-    });
+    res.json({ success: true, message: 'Owner approved successfully' });
   } catch (error) {
     console.error('Error approving owner:', error);
     res.status(500).json({ success: false, error: 'Failed to approve owner' });
   }
 });
 
-// Reject owner registration (admin only)
 router.post('/:ownerId/reject', verifyToken, isAdmin, async (req, res) => {
   try {
     const { ownerId } = req.params;
     const { reason } = req.body;
-    
-    const snapshot = await realtimeDb.ref(`owners/${ownerId}`).get();
-    if (!snapshot.exists()) {
+
+    const { rows } = await query('SELECT * FROM owner_profiles WHERE user_id = $1::uuid', [ownerId]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Owner not found' });
     }
 
-    const owner = snapshot.val();
-    
-    // Update owner status
-    await realtimeDb.ref(`owners/${ownerId}`).update({
-      status: 'rejected',
-      rejectedAt: new Date().toISOString(),
-      rejectedBy: req.user.uid,
-      rejectionReason: reason || 'Application did not meet requirements'
-    });
+    const owner = rows[0];
+    const now = new Date().toISOString();
+    const rejectionReason = reason || 'Application did not meet requirements';
 
-    // Send rejection email
+    await query(
+      `UPDATE owner_profiles SET status = 'rejected', rejected_at = $1::timestamptz, rejected_by = $2::uuid, rejection_reason = $3, updated_at = $1::timestamptz WHERE user_id = $4::uuid`,
+      [now, req.user.uid, rejectionReason, ownerId]
+    );
+
     try {
       await sendEmail(
         owner.email,
         'TurfNow - Owner Application Update',
-        emailTemplates.ownerRejected({ 
-          fullName: owner.fullName, 
-          reason: reason || 'Application did not meet requirements' 
+        emailTemplates.ownerRejected({
+          fullName: owner.full_name,
+          reason: rejectionReason,
         })
       );
     } catch (emailError) {
       console.error('Failed to send rejection email:', emailError.message);
     }
 
-    res.json({ 
-      success: true, 
-      message: 'Owner rejected' 
-    });
+    res.json({ success: true, message: 'Owner rejected' });
   } catch (error) {
     console.error('Error rejecting owner:', error);
     res.status(500).json({ success: false, error: 'Failed to reject owner' });
   }
 });
 
-// Get owner's turfs (owner only)
 router.get('/my-turfs', verifyToken, async (req, res) => {
   try {
-    const ownerSnapshot = await realtimeDb.ref(`owners/${req.user.uid}`).get();
-    
-    if (!ownerSnapshot.exists()) {
+    const { rows: op } = await query('SELECT * FROM owner_profiles WHERE user_id = $1::uuid', [req.user.uid]);
+
+    if (op.length === 0) {
       return res.status(404).json({ success: false, error: 'Owner profile not found' });
     }
 
-    const owner = ownerSnapshot.val();
-    
-    if (owner.status !== 'approved') {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Your owner account is not approved yet' 
+    if (op[0].status !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        error: 'Your owner account is not approved yet',
       });
     }
 
-    // Get all turfs owned by this user
     const turfs = [];
-    
     for (const sport of ALLOWED_SPORTS) {
-      const snapshot = await db.collection(sport).where('ownerId', '==', req.user.uid).get();
-      snapshot.docs.forEach(doc => {
-        turfs.push({ id: doc.id, sport, ...doc.data() });
-      });
+      const { rows } = await query(
+        'SELECT * FROM turfs WHERE sport = $1 AND owner_id = $2',
+        [sport, req.user.uid]
+      );
+      rows.forEach((row) => turfs.push({ sport, ...rowToTurf(row) }));
     }
 
     res.json({ success: true, data: turfs });
@@ -275,32 +326,38 @@ router.get('/my-turfs', verifyToken, async (req, res) => {
   }
 });
 
-// Get owner's bookings (owner only) — uses new bookings node
 router.get('/my-bookings', verifyToken, async (req, res) => {
   try {
-    // Get all turfs owned by this user first
-    const turfNames = [];
-    
+    const turfNames = new Set();
     for (const sport of ALLOWED_SPORTS) {
-      const snapshot = await db.collection(sport).where('ownerId', '==', req.user.uid).get();
-      snapshot.docs.forEach(doc => {
-        turfNames.push(doc.data().name);
-      });
+      const { rows } = await query(
+        'SELECT name FROM turfs WHERE sport = $1 AND owner_id = $2',
+        [sport, req.user.uid]
+      );
+      rows.forEach((r) => turfNames.add(r.name));
     }
 
-    // Get all bookings for these turfs
-    const bookingsSnapshot = await realtimeDb.ref('bookings').once('value');
-    const allBookings = bookingsSnapshot.val() || {};
-    const bookings = [];
-    
-    Object.entries(allBookings).forEach(([id, booking]) => {
-      if (turfNames.includes(booking.turfName)) {
-        bookings.push({ id, ...booking });
-      }
-    });
+    if (turfNames.size === 0) {
+      return res.json({ success: true, data: [] });
+    }
 
-    // Sort by date descending
-    bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const { rows: allBookings } = await query(`SELECT * FROM bookings ORDER BY created_at DESC`);
+    const bookings = allBookings
+      .filter((b) => turfNames.has(b.turf_name))
+      .map((row) => ({
+        id: row.id,
+        userId: row.user_id,
+        email: row.email,
+        turfName: row.turf_name,
+        turfImage: row.turf_image,
+        turfAddress: row.turf_address,
+        turfPrice: row.turf_price != null ? Number(row.turf_price) : null,
+        sport: row.sport,
+        time: row.time,
+        bookingDate: row.booking_date,
+        status: row.status,
+        createdAt: row.created_at?.toISOString?.() ?? row.created_at,
+      }));
 
     res.json({ success: true, data: bookings });
   } catch (error) {

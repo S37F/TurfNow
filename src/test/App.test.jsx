@@ -20,11 +20,13 @@ vi.mock('../context/Authcontext', () => ({
   }),
 }));
 
-// Mock firebase config
-vi.mock('../firebase-config/config', () => ({
-  auth: { currentUser: null },
-  db: {},
-  database: {},
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+  },
 }));
 
 const renderApp = (initialRoute = '/') => {

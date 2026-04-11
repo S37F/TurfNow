@@ -1,7 +1,6 @@
 # Dependencies
 node_modules/
 server/node_modules/
-functions/node_modules/
 
 # Environment files
 .env
@@ -19,13 +18,6 @@ dist/
 start-log.txt
 npm-output.log
 npm-debug.log*
-
-# Firebase credentials (NEVER commit these)
-server/config/serviceAccountKey.json
-functions/config/serviceAccountKey.json
-
-# Firebase cache
-.firebase/
 
 # OS files
 .DS_Store

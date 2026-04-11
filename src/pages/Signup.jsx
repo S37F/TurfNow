@@ -8,15 +8,16 @@ import "../style/login.css";
 import Logo from "../components/Logo";
 import { FiMail, FiLock } from "react-icons/fi";
 
-const getFirebaseErrorMessage = (code) => {
-  switch (code) {
-    case 'auth/email-already-in-use': return 'An account already exists with this email.';
-    case 'auth/invalid-email': return 'Invalid email address.';
-    case 'auth/weak-password': return 'Password must be at least 6 characters.';
-    case 'auth/operation-not-allowed': return 'Email/password signup is not enabled.';
-    case 'auth/network-request-failed': return 'Network error. Check your connection.';
-    default: return 'Signup failed. Please try again.';
+const getAuthErrorMessage = (err) => {
+  const msg = err?.message || '';
+  const lower = msg.toLowerCase();
+  if (lower.includes('already registered') || lower.includes('user already')) {
+    return 'An account already exists with this email.';
   }
+  if (lower.includes('invalid email')) return 'Invalid email address.';
+  if (lower.includes('password')) return msg.includes('6') ? 'Password must be at least 6 characters.' : msg;
+  if (lower.includes('network')) return 'Network error. Check your connection.';
+  return msg || 'Signup failed. Please try again.';
 };
 
 export const Signup = () => {
@@ -52,7 +53,7 @@ export const Signup = () => {
           });
           navigate("/login")
         } catch (err) {
-          setError(getFirebaseErrorMessage(err.code))
+          setError(getAuthErrorMessage(err))
         } finally {
           setLoading(false);
         }
@@ -60,12 +61,11 @@ export const Signup = () => {
     
     const signinWithgoogle = async () => {
       setLoading(true);
+      setError("");
       try {
         await googleSignin()
-        navigate("/turf")
       } catch (err) {
-        setError(getFirebaseErrorMessage(err.code))
-      } finally {
+        setError(getAuthErrorMessage(err))
         setLoading(false);
       }
     }
