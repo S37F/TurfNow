@@ -1,11 +1,22 @@
 import express from 'express';
 import { query } from '../config/db.js';
-import { getSupabaseAdmin } from '../config/supabaseAdmin.js';
 import { verifyToken, isAdmin } from '../middleware/auth.js';
 import { sendEmail, emailTemplates } from '../services/email.js';
 import { ALLOWED_SPORTS } from '../config/constants.js';
 
 const router = express.Router();
+
+function parseJsonField(val, fallback) {
+  if (val == null) return fallback;
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return fallback;
+    }
+  }
+  return val;
+}
 
 function rowToOwner(row) {
   return {
@@ -17,7 +28,7 @@ function rowToOwner(row) {
     businessName: row.business_name,
     businessAddress: row.business_address,
     city: row.city,
-    sportTypes: row.sport_types,
+    sportTypes: parseJsonField(row.sport_types, []),
     description: row.description,
     status: row.status,
     createdAt: row.created_at?.toISOString?.() ?? row.created_at,
@@ -27,7 +38,7 @@ function rowToOwner(row) {
     rejectedAt: row.rejected_at?.toISOString?.() ?? row.rejected_at,
     rejectedBy: row.rejected_by,
     rejectionReason: row.rejection_reason,
-    turfs: row.turfs,
+    turfs: parseJsonField(row.turfs, []),
   };
 }
 
@@ -39,11 +50,11 @@ function rowToTurf(row) {
     city: row.city,
     image: row.image,
     pricePerHour: Number(row.price_per_hour),
-    facilities: row.facilities,
+    facilities: parseJsonField(row.facilities, []),
     size: row.size,
     description: row.description,
     ownerId: row.owner_id,
-    available: row.available,
+    available: Boolean(row.available),
     rating: Number(row.rating),
     totalReviews: row.total_reviews,
     createdAt: row.created_at?.toISOString?.() ?? row.created_at,
@@ -218,21 +229,12 @@ router.post('/:ownerId/approve', verifyToken, isAdmin, async (req, res) => {
 
     const owner = rows[0];
 
-    const supabase = getSupabaseAdmin();
-    if (!supabase) {
-      return res.status(503).json({ success: false, error: 'Auth admin not configured' });
+    const { rows: userRows } = await query('SELECT id FROM users WHERE id = $1', [ownerId]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User account not found' });
     }
 
-    const { data: existing, error: getErr } = await supabase.auth.admin.getUserById(ownerId);
-    if (getErr || !existing.user) {
-      return res.status(404).json({ success: false, error: 'Auth user not found' });
-    }
-
-    const meta = existing.user.app_metadata || {};
-    const { error: updErr } = await supabase.auth.admin.updateUserById(ownerId, {
-      app_metadata: { ...meta, owner: true },
-    });
-    if (updErr) throw updErr;
+    await query('UPDATE users SET is_owner = 1 WHERE id = $1', [ownerId]);
 
     await query(
       `UPDATE owner_profiles SET status = 'approved', approved_at = $1::timestamptz, approved_by = $2::uuid, updated_at = $1::timestamptz WHERE user_id = $3::uuid`,
@@ -274,6 +276,8 @@ router.post('/:ownerId/reject', verifyToken, isAdmin, async (req, res) => {
       `UPDATE owner_profiles SET status = 'rejected', rejected_at = $1::timestamptz, rejected_by = $2::uuid, rejection_reason = $3, updated_at = $1::timestamptz WHERE user_id = $4::uuid`,
       [now, req.user.uid, rejectionReason, ownerId]
     );
+
+    await query('UPDATE users SET is_owner = 0 WHERE id = $1', [ownerId]);
 
     try {
       await sendEmail(

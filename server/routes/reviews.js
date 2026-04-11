@@ -31,7 +31,7 @@ async function updateTurfRating(sport, turfId) {
     const avgRating = (total / rows.length).toFixed(1);
 
     await query(
-      `UPDATE turfs SET rating = $1::numeric, total_reviews = $2, updated_at = now() WHERE id = $3::uuid AND sport = $4`,
+      `UPDATE turfs SET rating = $1::numeric, total_reviews = $2, updated_at = datetime('now') WHERE id = $3::uuid AND sport = $4`,
       [parseFloat(avgRating), rows.length, turfId, sport]
     );
   } catch (error) {

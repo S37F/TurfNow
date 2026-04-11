@@ -1,13 +1,11 @@
-import { Input, Button, Alert, Box, VStack, Text, HStack, Divider, Icon, useToast } from '@chakra-ui/react'
+import { Input, Button, Alert, Box, VStack, Text, HStack, Icon, useToast } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import loginBg from "../images/loginBg.png"
-import googleimg from "../images/search.png"
 import "../style/login.css"
 import { Link, useNavigate } from "react-router-dom";
 import { useUserAuth } from "../context/Authcontext";
 import Logo from "../components/Logo";
 import { FiMail, FiLock } from "react-icons/fi";
-import { supabase } from "../lib/supabase";
 
 const getAuthErrorMessage = (err) => {
   const msg = err?.message || '';
@@ -26,29 +24,17 @@ export const Login = () => {
     const [pass, setPass] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
-    const { login, googleSignin } = useUserAuth()
+    const { login } = useUserAuth()
     const navigate = useNavigate()
     const toast = useToast()
 
-    const handleForgotPassword = async () => {
-      if (!email.trim()) {
-        setError("Please enter your email address first.");
-        return;
-      }
-      try {
-        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/login`,
-        });
-        if (resetErr) throw resetErr;
-        toast({
-          title: "Reset email sent!",
-          description: "Check your inbox for a password reset link.",
-          status: "success",
-          duration: 5000,
-        });
-      } catch (err) {
-        setError(getAuthErrorMessage(err));
-      }
+    const handleForgotPassword = () => {
+      toast({
+        title: "Password reset unavailable",
+        description: "Self-service reset is not enabled. Contact support if you need help.",
+        status: "info",
+        duration: 5000,
+      });
     };
 
     const handlesignin = async (e) => {
@@ -77,17 +63,6 @@ export const Login = () => {
       } catch (err) {
         setError(getAuthErrorMessage(err))
       } finally {
-        setLoading(false);
-      }
-    }
-    
-    const signinWithgoogle = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        await googleSignin()
-      } catch (err) {
-        setError(getAuthErrorMessage(err))
         setLoading(false);
       }
     }
@@ -194,26 +169,6 @@ export const Login = () => {
             Sign In
           </Button>
 
-          <HStack>
-            <Divider />
-            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" whiteSpace="nowrap">or</Text>
-            <Divider />
-          </HStack>
-
-          <Button 
-            w="100%"
-            size={{ base: 'md', md: 'lg' }}
-            variant="outline"
-            borderRadius="lg"
-            border="2px solid"
-            borderColor="gray.200"
-            _hover={{ borderColor: 'red.500', bg: 'red.50' }}
-            onClick={signinWithgoogle}
-            leftIcon={<img src={googleimg} alt="Google" style={{ width: '18px', height: '18px' }} />}
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            Continue with Google
-          </Button>
         </VStack>
 
         <Text 

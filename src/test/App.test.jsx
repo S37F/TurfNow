@@ -15,18 +15,8 @@ vi.mock('../context/Authcontext', () => ({
     signup: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),
-    googleSignin: vi.fn(),
     refreshClaims: vi.fn(),
   }),
-}));
-
-vi.mock('../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
-    },
-  },
 }));
 
 const renderApp = (initialRoute = '/') => {

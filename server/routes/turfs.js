@@ -5,6 +5,18 @@ import { ALLOWED_SPORTS } from '../config/constants.js';
 
 const router = express.Router();
 
+function parseJsonField(val, fallback) {
+  if (val == null) return fallback;
+  if (typeof val === 'string') {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return fallback;
+    }
+  }
+  return val;
+}
+
 function rowToTurf(row) {
   return {
     id: row.id,
@@ -13,11 +25,11 @@ function rowToTurf(row) {
     city: row.city,
     image: row.image,
     pricePerHour: Number(row.price_per_hour),
-    facilities: row.facilities,
+    facilities: parseJsonField(row.facilities, []),
     size: row.size,
     description: row.description,
     ownerId: row.owner_id,
-    available: row.available,
+    available: Boolean(row.available),
     rating: Number(row.rating),
     totalReviews: row.total_reviews,
     createdAt: row.created_at?.toISOString?.() ?? row.created_at,

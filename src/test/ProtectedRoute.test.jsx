@@ -4,14 +4,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 
-vi.mock('../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
-    },
-  },
-}));
-
 const renderProtectedRoute = (mockAuth) => {
   vi.doMock('../context/Authcontext', () => ({
     useUserAuth: () => mockAuth,

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import loginBg from "../images/loginBg.png";
-import { Button, Input, Alert, Box, VStack, Text, HStack, Divider, Icon, useToast } from "@chakra-ui/react";
+import { Button, Input, Alert, Box, VStack, Text, HStack, Icon, useToast } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserAuth } from "../context/Authcontext";
-import googleimg from "../images/search.png";
 import "../style/login.css";
 import Logo from "../components/Logo";
 import { FiMail, FiLock } from "react-icons/fi";
@@ -25,7 +24,7 @@ export const Signup = () => {
     const [pass, setPass] = useState("")
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
-    const { signup, googleSignin } = useUserAuth()
+    const { signup } = useUserAuth()
     const navigate = useNavigate()
     const toast = useToast()
     
@@ -47,11 +46,11 @@ export const Signup = () => {
           await signup(email, pass)
           toast({
             title: "Account created!",
-            description: "You can now sign in.",
+            description: "Welcome to TurfNow.",
             status: "success",
             duration: 3000,
           });
-          navigate("/login")
+          navigate("/turf")
         } catch (err) {
           setError(getAuthErrorMessage(err))
         } finally {
@@ -59,17 +58,6 @@ export const Signup = () => {
         }
     }
     
-    const signinWithgoogle = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        await googleSignin()
-      } catch (err) {
-        setError(getAuthErrorMessage(err))
-        setLoading(false);
-      }
-    }
-
   return (
     <Box id="mainLoginContainer">
       <Box id="loginBg">
@@ -161,26 +149,6 @@ export const Signup = () => {
             Create Account
           </Button>
 
-          <HStack>
-            <Divider />
-            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" whiteSpace="nowrap">or</Text>
-            <Divider />
-          </HStack>
-
-          <Button 
-            w="100%"
-            size={{ base: 'md', md: 'lg' }}
-            variant="outline"
-            borderRadius="lg"
-            border="2px solid"
-            borderColor="gray.200"
-            _hover={{ borderColor: 'red.500', bg: 'red.50' }}
-            onClick={signinWithgoogle}
-            leftIcon={<img src={googleimg} alt="Google" style={{ width: '18px', height: '18px' }} />}
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            Continue with Google
-          </Button>
         </VStack>
 
         <Text 

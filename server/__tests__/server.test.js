@@ -1,14 +1,16 @@
 import request from 'supertest';
 
 // ---- Build a minimal Express app that mirrors server.js routes ----
-// Route modules use Postgres + Supabase when env is set; in CI without DATABASE_URL, DB calls may 500.
+// Route modules use SQLite; in-memory DB is empty unless seeded.
 
 let app;
 
 beforeAll(async () => {
-  // Set test env
+  // Set test env (SQLite in-memory + JWT before DB/auth load)
   process.env.NODE_ENV = 'test';
   process.env.FRONTEND_URL = 'http://localhost:3001';
+  process.env.SQLITE_PATH = ':memory:';
+  process.env.JWT_SECRET = 'test-jwt-secret-at-least-16-chars';
 
   // Dynamic import so env vars are set first
   const { default: server } = await import('../server.js');
@@ -40,14 +42,11 @@ describe('404 Handler', () => {
 });
 
 describe('Turfs API', () => {
-  it('GET /api/turfs/:sport returns 200 or 500 for valid sport (500 if database unavailable)', async () => {
+  it('GET /api/turfs/:sport returns 200 with empty list when no turfs seeded', async () => {
     const res = await request(app).get('/api/turfs/football');
-    // Firestore may not be enabled in test environment
-    expect([200, 500]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
-    }
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it('GET /api/turfs/:sport returns 400 for invalid sport', async () => {
@@ -78,13 +77,11 @@ describe('Bookings API', () => {
     expect(res.status).toBe(401);
   });
 
-  it('GET /api/bookings/slots/:turfName/:date returns slots or 500 if database unavailable', async () => {
+  it('GET /api/bookings/slots/:turfName/:date returns booked slots list', async () => {
     const res = await request(app).get('/api/bookings/slots/TestTurf/2025-12-01');
-    expect([200, 500]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
-    }
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it('PATCH /api/bookings/:id/cancel without auth returns 401', async () => {

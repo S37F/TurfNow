@@ -14,11 +14,20 @@ import bookingsRouter from './routes/bookings.js';
 import reviewsRouter from './routes/reviews.js';
 import adminRouter from './routes/admin.js';
 import ownersRouter from './routes/owners.js';
+import authRouter from './routes/auth.js';
 import { sanitizeInput } from './middleware/sanitize.js';
+import { getJwtSecret } from './config/jwt.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 dotenv.config({ path: join(__dirname, '.env') });
+
+try {
+  getJwtSecret();
+} catch (e) {
+  console.error(e.message || e);
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -61,8 +70,6 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
       connectSrc: [
         "'self'",
-        "https://*.supabase.co",
-        "wss://*.supabase.co",
         "https://accounts.google.com",
         "https://apis.google.com",
         "https://www.googleapis.com",
@@ -106,6 +113,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/turfs', turfsRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/reviews', reviewsRouter);

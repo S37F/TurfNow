@@ -10,14 +10,23 @@ export default defineConfig({
     css: true,
     exclude: ['**/node_modules/**', '**/dist/**', '**/server/**'],
     env: {
-      VITE_SUPABASE_URL: 'https://vitest-placeholder.supabase.co',
-      VITE_SUPABASE_ANON_KEY: 'vitest-placeholder-anon-key',
-      VITE_API_URL: 'http://127.0.0.1:5000/api',
+      VITE_API_URL: '/api',
     },
   },
   server: {
     port: 3001,
-    open: false
+    open: false,
+    // Local dev: browser calls /api → forwarded to Express (same origin, no CORS setup)
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: 'build',
@@ -38,8 +47,6 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // Chakra UI chunk
           'vendor-chakra': ['@chakra-ui/react', '@emotion/react', '@emotion/styled'],
-          // Supabase client chunk
-          'vendor-supabase': ['@supabase/supabase-js'],
         },
         // Asset file naming
         chunkFileNames: 'assets/js/[name]-[hash].js',

@@ -199,11 +199,6 @@ async function insertTurf(row) {
 
 async function seedData() {
   try {
-    if (!process.env.DATABASE_URL) {
-      console.error('❌ DATABASE_URL is not set. Add it to server/.env (Supabase → Settings → Database).');
-      process.exit(1);
-    }
-
     console.log('🌱 Clearing existing turfs and reviews (re-seed)...');
     await query('DELETE FROM reviews');
     await query('DELETE FROM turfs');

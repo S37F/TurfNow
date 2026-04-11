@@ -1,5 +1,4 @@
 import express from 'express';
-import { getSupabaseAdmin } from '../config/supabaseAdmin.js';
 import { query } from '../config/db.js';
 import { verifyToken, isAdmin } from '../middleware/auth.js';
 import { ALLOWED_SPORTS } from '../config/constants.js';
@@ -49,28 +48,16 @@ router.get('/stats', async (req, res) => {
 
     for (const sport of ALLOWED_SPORTS) {
       const { rows } = await query('SELECT COUNT(*)::int AS c FROM turfs WHERE sport = $1', [sport]);
-      const count = rows[0]?.c ?? 0;
+      const count = parseInt(String(rows[0]?.c ?? 0), 10);
       stats.sportWise[sport] = count;
       stats.totalTurfs += count;
     }
 
     const { rows: bc } = await query('SELECT COUNT(*)::int AS c FROM bookings');
-    stats.totalBookings = bc[0]?.c ?? 0;
+    stats.totalBookings = parseInt(String(bc[0]?.c ?? 0), 10);
 
-    const supabase = getSupabaseAdmin();
-    if (supabase) {
-      let page = 1;
-      const perPage = 1000;
-      let totalUsers = 0;
-      while (true) {
-        const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-        if (error) break;
-        totalUsers += data.users.length;
-        if (data.users.length < perPage) break;
-        page += 1;
-      }
-      stats.totalUsers = totalUsers;
-    }
+    const { rows: uc } = await query('SELECT COUNT(*)::int AS c FROM users');
+    stats.totalUsers = parseInt(String(uc[0]?.c ?? 0), 10);
 
     res.json({ success: true, data: stats });
   } catch (error) {
@@ -82,21 +69,13 @@ router.get('/stats', async (req, res) => {
 router.post('/make-admin/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const supabase = getSupabaseAdmin();
-    if (!supabase) {
-      return res.status(503).json({ success: false, error: 'Auth admin not configured' });
-    }
 
-    const { data: existing, error: getErr } = await supabase.auth.admin.getUserById(userId);
-    if (getErr || !existing.user) {
+    const { rows } = await query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    const meta = existing.user.app_metadata || {};
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
-      app_metadata: { ...meta, admin: true },
-    });
-    if (error) throw error;
+    await query('UPDATE users SET is_admin = 1 WHERE id = $1', [userId]);
 
     res.json({ success: true, message: 'User is now an admin' });
   } catch (error) {
@@ -108,21 +87,17 @@ router.post('/make-admin/:userId', async (req, res) => {
 router.post('/remove-admin/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const supabase = getSupabaseAdmin();
-    if (!supabase) {
-      return res.status(503).json({ success: false, error: 'Auth admin not configured' });
+
+    if (userId === req.user.uid) {
+      return res.status(400).json({ success: false, error: 'You cannot remove your own admin privileges' });
     }
 
-    const { data: existing, error: getErr } = await supabase.auth.admin.getUserById(userId);
-    if (getErr || !existing.user) {
+    const { rows } = await query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (rows.length === 0) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    const meta = { ...(existing.user.app_metadata || {}) };
-    delete meta.admin;
-
-    const { error } = await supabase.auth.admin.updateUserById(userId, { app_metadata: meta });
-    if (error) throw error;
+    await query('UPDATE users SET is_admin = 0 WHERE id = $1', [userId]);
 
     res.json({ success: true, message: 'Admin privileges removed' });
   } catch (error) {
@@ -133,30 +108,18 @@ router.post('/remove-admin/:userId', async (req, res) => {
 
 router.get('/users', async (req, res) => {
   try {
-    const supabase = getSupabaseAdmin();
-    if (!supabase) {
-      return res.status(503).json({ success: false, error: 'Auth admin not configured' });
-    }
+    const { rows } = await query(
+      `SELECT id, email, display_name, is_admin, is_owner, created_at FROM users ORDER BY created_at DESC`
+    );
 
-    const allUsers = [];
-    let page = 1;
-    const perPage = 1000;
-    while (true) {
-      const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-      if (error) throw error;
-      allUsers.push(...data.users);
-      if (data.users.length < perPage) break;
-      page += 1;
-    }
-
-    const users = allUsers.map((user) => ({
-      uid: user.id,
-      email: user.email,
-      displayName: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
-      createdAt: user.created_at,
-      lastSignIn: user.last_sign_in_at,
-      isAdmin: user.app_metadata?.admin === true,
-      isOwner: user.app_metadata?.owner === true,
+    const users = rows.map((row) => ({
+      uid: row.id,
+      email: row.email,
+      displayName: row.display_name,
+      createdAt: row.created_at,
+      lastSignIn: null,
+      isAdmin: !!row.is_admin,
+      isOwner: !!row.is_owner,
     }));
 
     res.json({ success: true, data: users });

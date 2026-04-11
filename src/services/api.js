@@ -1,7 +1,10 @@
 import axios from 'axios';
-import { supabase } from '../lib/supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api' : 'http://localhost:5000/api');
+
+const TOKEN_KEY = 'turfnow_token';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,10 +14,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-  async (config) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-      config.headers.Authorization = `Bearer ${session.access_token}`;
+  (config) => {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -25,7 +28,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      await supabase.auth.signOut();
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(TOKEN_KEY);
+      }
       window.location.href = '/login';
     } else if (error.response?.status === 429) {
       console.warn('Rate limited. Please wait and try again.');

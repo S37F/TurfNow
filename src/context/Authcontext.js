@@ -1,11 +1,34 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
 
 const userAuthContext = createContext();
 
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api' : 'http://localhost:5000/api');
+
+const TOKEN_KEY = 'turfnow_token';
+
 function mapUser(u) {
   if (!u) return null;
-  return { ...u, uid: u.id };
+  return {
+    id: u.id,
+    uid: u.id,
+    email: u.email,
+    displayName: u.displayName ?? null,
+  };
+}
+
+async function authJson(path, options = {}) {
+  const base = API_BASE.replace(/\/$/, '');
+  const url = `${base}${path.startsWith('/') ? path : `/${path}`}`;
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const res = await fetch(url, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || res.statusText || 'Request failed');
+    throw err;
+  }
+  return data;
 }
 
 export function UserAuthContextProvider({ children }) {
@@ -14,55 +37,80 @@ export function UserAuthContextProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const syncClaims = useCallback((sessionUser) => {
-    if (!sessionUser) {
+  const applySession = useCallback((token, apiUser) => {
+    if (!token || !apiUser) {
+      localStorage.removeItem(TOKEN_KEY);
+      setUser(null);
       setIsAdmin(false);
       setIsOwner(false);
       return;
     }
-    setIsAdmin(sessionUser.app_metadata?.admin === true);
-    setIsOwner(sessionUser.app_metadata?.owner === true);
+    localStorage.setItem(TOKEN_KEY, token);
+    setUser(mapUser(apiUser));
+    setIsAdmin(!!apiUser.isAdmin);
+    setIsOwner(!!apiUser.isOwner);
   }, []);
 
   async function signup(email, password) {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    return { user: data.user ? mapUser(data.user) : null };
+    const data = await authJson('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    applySession(data.token, data.user);
+    return { user: mapUser(data.user) };
   }
 
   async function login(email, password) {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    const data = await authJson('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    applySession(data.token, data.user);
   }
 
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  }
-
-  async function googleSignin() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/turf` },
-    });
-    if (error) throw error;
+    applySession(null, null);
   }
 
   const refreshClaims = useCallback(async () => {
-    const { data, error } = await supabase.auth.refreshSession();
-    if (error || !data.session?.user) return;
-    syncClaims(data.session.user);
-  }, [syncClaims]);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const data = await authJson('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.user) {
+        setUser(mapUser(data.user));
+        setIsAdmin(!!data.user.isAdmin);
+        setIsOwner(!!data.user.isOwner);
+      }
+    } catch {
+      applySession(null, null);
+    }
+  }, [applySession]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? mapUser(session.user) : null);
-      syncClaims(session?.user ?? null);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => subscription.unsubscribe();
-  }, [syncClaims]);
+    authJson('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((data) => {
+        if (data.user) {
+          setUser(mapUser(data.user));
+          setIsAdmin(!!data.user.isAdmin);
+          setIsOwner(!!data.user.isOwner);
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <userAuthContext.Provider
@@ -74,7 +122,6 @@ export function UserAuthContextProvider({ children }) {
         signup,
         login,
         logout,
-        googleSignin,
         refreshClaims,
       }}
     >

@@ -1,14 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
-      signOut: vi.fn().mockResolvedValue({ error: null }),
-    },
-  },
-}));
-
 // Mock axios
 vi.mock('axios', () => {
   const mockAxiosInstance = {
