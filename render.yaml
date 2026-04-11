@@ -1,0 +1,27 @@
+# TurfNow API on Render (https://render.com)
+# After first deploy: set secret env vars in the dashboard (Environment),
+# or define them here with sync: false and set values in Render UI.
+#
+# Frontend stays on Vercel — set VITE_API_URL to https://<this-service>.onrender.com/api
+
+services:
+  - type: web
+    name: turfnow-api
+    env: node
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

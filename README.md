@@ -33,8 +33,10 @@ Optional sample data: `cd server && npm run seed` (needs `DATABASE_URL`).
 ## Deploy
 
 - **Frontend:** Vercel — root `vercel.json`, set `VITE_*` env vars.  
-- **API:** Railway — service root `server/`, `railway.toml`, set vars from `server/.env.example`.  
+- **API:** [Render](https://render.com) — Web Service with **Root Directory** `server` (or use repo `render.yaml`). Set env vars from `server/.env.example` (`DATABASE_URL`, `SUPABASE_*`, `FRONTEND_URL` = your Vercel URL, comma-separated if needed).  
 - **DB + auth:** Supabase project.
+
+After Render gives you a URL like `https://turfnow-api.onrender.com`, set **`VITE_API_URL`** on Vercel to `https://turfnow-api.onrender.com/api` (include `/api`).
 
 ## Scripts
 
