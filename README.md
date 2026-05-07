@@ -1,12 +1,12 @@
 # TurfNow
 
-Sports turf booking: React (Vite) + Chakra UI frontend, Express API, SQLite + JWT auth. Payments are cash at the venue.
+Sports turf booking: React (Vite) + Chakra UI frontend, Express API, Neon Postgres + JWT auth. Payments are cash at the venue.
 
 ## Stack
 
 - **Frontend:** React 18, Vite, Chakra UI, React Router, Axios
-- **Backend:** Node.js 22+, Express, built-in `node:sqlite`, `jsonwebtoken`, `bcryptjs`
-- **Database:** SQLite — schema in `server/db/schema.sql` (created automatically on first API start)
+- **Backend:** Node.js, Express, `pg`, `jsonwebtoken`, `bcryptjs`
+- **Database:** Neon Postgres
 
 ## Setup
 
@@ -20,7 +20,7 @@ Sports turf booking: React (Vite) + Chakra UI frontend, Express API, SQLite + JW
 2. **Environment**
 
    - **Root:** copy `.env.example` → `.env`. Use `VITE_API_URL=/api` so Vite proxies API calls to the backend (see `vite.config.js`).
-   - **`server/`:** copy `server/.env.example` → `server/.env`. Set `JWT_SECRET` (long random string) and `FRONTEND_URL=http://localhost:3001`. The API needs **Node.js 22.5+** (`node:sqlite`).
+   - **`server/`:** copy `server/.env.example` → `server/.env`. Set `DATABASE_URL`, `JWT_SECRET` (long random string), and `FRONTEND_URL=http://localhost:3001`.
 
 3. **Optional sample turfs**
 
