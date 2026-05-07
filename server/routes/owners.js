@@ -234,7 +234,7 @@ router.post('/:ownerId/approve', verifyToken, isAdmin, async (req, res) => {
       return res.status(404).json({ success: false, error: 'User account not found' });
     }
 
-    await query('UPDATE users SET is_owner = 1 WHERE id = $1', [ownerId]);
+    await query('UPDATE users SET is_owner = true WHERE id = $1', [ownerId]);
 
     await query(
       `UPDATE owner_profiles SET status = 'approved', approved_at = $1::timestamptz, approved_by = $2::uuid, updated_at = $1::timestamptz WHERE user_id = $3::uuid`,
@@ -277,7 +277,7 @@ router.post('/:ownerId/reject', verifyToken, isAdmin, async (req, res) => {
       [now, req.user.uid, rejectionReason, ownerId]
     );
 
-    await query('UPDATE users SET is_owner = 0 WHERE id = $1', [ownerId]);
+    await query('UPDATE users SET is_owner = false WHERE id = $1', [ownerId]);
 
     try {
       await sendEmail(

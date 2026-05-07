@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
 
     const { rows: countRows } = await query('SELECT COUNT(*) AS c FROM users');
     const userCount = parseInt(String(countRows[0]?.c ?? 0), 10);
-    const isAdmin = userCount === 0 ? 1 : 0;
+    const isAdmin = userCount === 0;
 
     const id = randomUUID();
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -52,7 +52,7 @@ router.post('/register', async (req, res) => {
 
     const { rows } = await query(
       `INSERT INTO users (id, email, password_hash, display_name, is_admin, is_owner, created_at)
-       VALUES ($1, $2, $3, $4, $5, 0, $6)
+       VALUES ($1, $2, $3, $4, $5, false, $6)
        RETURNING id, email, display_name, is_admin, is_owner`,
       [id, email, passwordHash, displayName, isAdmin, now]
     );

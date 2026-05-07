@@ -75,7 +75,7 @@ router.post('/make-admin/:userId', async (req, res) => {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    await query('UPDATE users SET is_admin = 1 WHERE id = $1', [userId]);
+    await query('UPDATE users SET is_admin = true WHERE id = $1', [userId]);
 
     res.json({ success: true, message: 'User is now an admin' });
   } catch (error) {
@@ -97,7 +97,7 @@ router.post('/remove-admin/:userId', async (req, res) => {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    await query('UPDATE users SET is_admin = 0 WHERE id = $1', [userId]);
+    await query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
 
     res.json({ success: true, message: 'Admin privileges removed' });
   } catch (error) {
